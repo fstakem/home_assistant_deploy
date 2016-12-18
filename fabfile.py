@@ -7,6 +7,7 @@
 # --------------------------------------|~~~~~~~~|--------------------------------------
 
 import os
+import fabric
 from fabric.api import local
 from collections import namedtuple
 from getpass import getpass
@@ -27,6 +28,11 @@ class User(object):
 
     def __str__(self):
         return 'User<%s>' % (self.name)
+
+
+# Globals
+# --------------------------------------------------------------------------
+debug = True
 
 
 # Data
@@ -100,14 +106,20 @@ https
 2812/tcp
 """
 # Missing samba
+service_file = 'home-assistant.service'
 
 
 # Helper functions
 # --------------------------------------------------------------------------
+def sudo(cmd, debug=False):
+    if debug:
+        print(cmd)
+    else:
+        fabric.api.sudo(cmd)
+
 def apt_get(packages):
     cmd = 'apt-get -qy install %s' % ' '.join(packages)
-    print(cmd)
-    #sudo(cmd, shell=False)
+    sudo(cmd, debug)
 
 def get_passwd(username):
     tries = 3
@@ -120,7 +132,7 @@ def get_passwd(username):
 
     raise ValueError
 
-   
+
 # Setup functions
 # --------------------------------------------------------------------------
 def setup_users(users, user_dirs, aliases):
@@ -142,15 +154,13 @@ def get_passwords(users):
 def create_account(user):
     if user.account_type == 'admin':
         cmd = 'useradd -m %s -G sudo' % (user.name)
-        print(cmd)
+        sudo(cmd, debug)
     elif user.account_type == 'system':
         cmd = 'useradd -r %s' % (user.name)
-        print(cmd)
+        sudo(cmd, debug)
 
-    #sudo(cmd, shell=False)
     cmd = 'echo %s | passwd %s --stdin' % (user.password, user.name)
-    print(cmd)
-    #sudo(cmd, shell=False)
+    sudo(cmd, debug)
 
 def create_dirs(user, user_dirs):
     if not user.account_type == 'admin':
@@ -159,60 +169,53 @@ def create_dirs(user, user_dirs):
     for dir in user_dirs:
         path = '/home/%s/%s' % (user.name, dir)
         cmd = 'mkdir %s' % path
-        #sudo(cmd, shell=False) 
-        print(cmd)
+        sudo(cmd, debug)
+
         cmd = 'chown %s:%s %s' % (user.name, user.name, path)
-        #sudo(cmd, shell=False) 
-        print(cmd)
+        sudo(cmd, debug)
 
 def create_system_aliases(aliases):
     cmd = 'echo # Aliases >> /etc/bash.bashrc'
-    print(cmd)
-    #sudo(cmd, shell=False)
+    sudo(cmd, debug)
 
     for alias in aliases:
         cmd = 'echo %s > /etc/bash.bashrc' % (alias)
-        print(cmd)
-        #sudo(cmd, shell=False)
+        sudo(cmd, debug)
 
     cmd = ''
-    print(cmd)
-    #sudo(cmd, shell=False)
+    sudo(cmd, debug)
 
 def create_aliases(user, aliases):
     if not user.account_type == 'admin':
         return
 
     cmd = 'echo # Aliases >> /home/%s/.bashrc' % (user.name)
-    print(cmd)
-    #sudo(cmd, shell=False)
+    sudo(cmd, debug)
 
     for alias in aliases:
         cmd = 'echo %s >> /home/%s/.bashrc' % (alias, user.name)
-        print(cmd)
-        #sudo(cmd, shell=False)
+        sudo(cmd, debug)
 
     cmd = ''
-    print(cmd)
-    #sudo(cmd, shell=False)
+    sudo(cmd, debug)
 
 def remove_pi_user():
     cmd = 'deluser -r pi'
-    print(cmd)
-    #sudo(cmd, shell=False)
+    sudo(cmd, debug)
 
 def setup_pyenv(ha_user, users, git_url, shortcuts):
     cmd = 'su %s' % (ha_user.name)
-    print(cmd)
-    #sudo(cmd, shell=False)
+    sudo(cmd, debug)
 
     path = '/srv/pyenv'
     cmd = 'mkdir %s' % (path)
+    sudo(cmd, debug)
+
     cmd = 'git clone %s %s' % (git_url, path)
+    sudo(cmd, debug)
 
     cmd = 'exit'
-    print(cmd)
-    #sudo(cmd, shell=False)
+    sudo(cmd, debug)
     
     add_pyenv_system_shortcuts(shortcuts)
     for user in users:
@@ -220,156 +223,130 @@ def setup_pyenv(ha_user, users, git_url, shortcuts):
 
 def add_pyenv_system_shortcuts(shortcuts):
     cmd = 'echo # Pyenv setup >> /etc/bash.bashrc'
-    print(cmd)
-    #sudo(cmd, shell=False)
+    sudo(cmd, debug)
 
     for shortcut in shortcuts:
         cmd = 'echo %s >> /etc/bash.bashrc' % (shortcut)
-        print(cmd)
-        #sudo(cmd, shell=False)
+        sudo(cmd, debug)
 
     cmd = ''
-    print(cmd)
-    #sudo(cmd, shell=False)
+    sudo(cmd, debug)
 
 def add_pyenv_shortcuts(user, shortcuts):
     cmd = 'echo # Pyenv setup >> /home/%s/.bashrc' % (user.name)
-    print(cmd)
-    #sudo(cmd, shell=False)
+    sudo(cmd, debug)
 
     for shortcut in shortcuts:
         cmd = 'echo %s >> /home/%s/.bashrc' % (shortcut, user.name)
-        print(cmd)
-        #sudo(cmd, shell=False)
+        sudo(cmd, debug)
 
     cmd = ''
-    print(cmd)
-    #sudo(cmd, shell=False)
+    sudo(cmd, debug)
 
 def setup_python(ha_user, versions, current_python):
     cmd = 'su %s' % (ha_user.name)
-    print(cmd)
-    #sudo(cmd, shell=False)
+    sudo(cmd, debug)
 
     cmd = 'source /etc/bash.bashrc'
-    print(cmd)
-    #sudo(cmd, shell=False)
+    sudo(cmd, debug)
 
     for version in versions:
         cmd = 'pyenv install %s' % (version)
-        print(cmd)
-        #sudo(cmd, shell=False)
+        sudo(cmd, debug)
 
     cmd = 'pyenv global %s' % (current_python)
-    print(cmd)
-    #sudo(cmd, shell=False)
+    sudo(cmd, debug)
 
     cmd = 'exit'
-    print(cmd)
-    #sudo(cmd, shell=False)
+    sudo(cmd, debug)
 
 def setup_home_assistant(ha_user, ha_path, ha_url, src_dir_name, config_dir_name, venv_dir_name, config_url):
     cmd = 'su %s' % (ha_user.name)
-    print(cmd)
-    #sudo(cmd, shell=False)
+    sudo(cmd, debug)
 
     cmd = 'mkdir %s' % (ha_path)
-    print(cmd)
-    #sudo(cmd, shell=False)
+    sudo(cmd, debug)
 
     src_path = os.path.join(ha_path, src_dir_name)
     cmd = 'mkdir %s' % (src_path)
-    print(cmd)
-    #sudo(cmd, shell=False)
+    sudo(cmd, debug)
 
     cmd = 'git clone %s %s' % (ha_url, src_path)
-    print(cmd)
-    #sudo(cmd, shell=False)
+    sudo(cmd, debug)
 
     config_path = os.path.join(ha_path, config_dir_name)
     cmd = 'mkdir %s' % (config_path)
-    print(cmd)
-    #sudo(cmd, shell=False)
+    sudo(cmd, debug)
 
     cmd = 'git clone %s %s' % (config_url, config_path)
-    print(cmd)
-    #sudo(cmd, shell=False)
+    sudo(cmd, debug)
 
     venv_path = os.path.join(ha_path, venv_dir_name)
     cmd = 'virtualenv %s' % (venv_path)
-    print(cmd)
-    #sudo(cmd, shell=False)
+    sudo(cmd, debug)
 
     activate_path = os.path.join(venv_path, 'bin', 'activate')
     cmd = 'source %s' % (activate_path)
-    print(cmd)
-    #sudo(cmd, shell=False)
+    sudo(cmd, debug)
 
     cmd = 'pip install -e %s' % (src_path)
-    print(cmd)
-    #sudo(cmd, shell=False)
+    sudo(cmd, debug)
 
     cmd = 'exit'
-    print(cmd)
-    #sudo(cmd, shell=False)
+    sudo(cmd, debug)
 
 def setup_firewall(apps_allowed):
     cmd = 'ufw default deny incoming'
-    print(cmd)
-    #sudo(cmd, shell=False)
+    sudo(cmd, debug)
 
     cmd = 'ufw default allow outgoing'
-    print(cmd)
-    #sudo(cmd, shell=False)
+    sudo(cmd, debug)
 
     for app in apps_allowed:
         cmd = 'ufw allow %s' % (app)
-        print(cmd)
-        #sudo(cmd, shell=False)
+        sudo(cmd, debug)
 
     cmd = 'ufw enable'
-    print(cmd)
-    #sudo(cmd, shell=False)
+    sudo(cmd, debug)
 
 def setup_smb(users, ha_path, ha_folder_name):
     # passwords
     # TODO
 
     cmd = 'echo >> /etc/samba/smb.conf'
-    print(cmd)
-    #sudo(cmd, shell=False)
+    sudo(cmd, debug)
 
     cmd = 'echo [%s] >> /etc/samba/smb.conf' % (ha_folder_name)
-    print(cmd)
-    #sudo(cmd, shell=False)
+    sudo(cmd, debug)
 
     cmd = 'echo path = %s >> /etc/samba/smb.conf' % (ha_path)
-    print(cmd)
-    #sudo(cmd, shell=False)
+    sudo(cmd, debug)
 
     valid_users = [user.name for user in users]
     user_str = ' '.join(valid_users)
     cmd = 'echo valid users = %s >> /etc/samba/smb.conf' % (user_str)
-    print(cmd)
-    #sudo(cmd, shell=False)
+    sudo(cmd, debug)
 
     cmd = 'echo read only = no >> /etc/samba/smb.conf'
-    print(cmd)
-    #sudo(cmd, shell=False)
+    sudo(cmd, debug)
 
     cmd = 'echo browseable = yes >> /etc/samba/smb.conf'
-    print(cmd)
-    #sudo(cmd, shell=False)
+    sudo(cmd, debug)
 
     cmd = 'service samba restart'
-    print(cmd)
-    #sudo(cmd, shell=False)
+    sudo(cmd, debug)
 
 def setup_monit():
     pass
 
-def setup_sysd():
-    pass
+def setup_sysd(service_file):
+    fabric.api.put(service_file, '/etc/systemd/system')
+
+    cmd = 'systemctl enable home-assistant'
+    sudo(cmd, debug)
+
+    cmd = 'systemctl start home-assistant'
+    sudo(cmd, debug)
 
 
 # Main
@@ -395,6 +372,9 @@ def install_all():
     setup_home_assistant(ha_user, ha_path, ha_url, src_dir_name, config_dir_name, venv_dir_name, config_url)
     setup_firewall(apps_allowed)
     setup_smb(users, ha_path, ha_folder_name)
+    setup_sysd(service_file)
+
+
 
     #reboot()
     remove_pi_user()
