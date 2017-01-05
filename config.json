@@ -1,0 +1,71 @@
+{
+    "system_libs":          [
+                                "vim",
+                                "tmux",
+                                "gedit",
+                                "kate",
+                                "tig",
+                                "ufw",
+                                "GUFW",
+                                "htop",
+                                "samba",
+                                "monit",
+                                "libreadline-dev",
+                                "libnursesw5-dev",
+                                "libssl-dev",
+                                "libgdbm-dev",
+                                "libsqlite3-dev",
+                                "libbz2-dev",
+                                "liblzma-dev",
+                                "libdb-dev",
+                                "tk-dev"
+                            ],
+    "user_dirs":            [
+                                "projects",
+                                "software",
+                                "notes",
+                                "tmp",
+                                "docs"
+                            ],
+    "users":                [
+                                {
+                                    "name": "hass",
+                                    "type": "system",
+                                    "ha_user": true
+                                },
+                                {
+                                    "name": "fstakem",
+                                    "type": "admin",
+                                    "ha_user": false
+                                }
+                            ],
+    "user_aliases":         [
+                                "alias ll='ls -la'",
+                                "alias cd..='cd ..'",
+                                "alias ..='cd ..'"
+                            ],
+    "pyenv_git_url":        "https://github.com/yyuu/pyenv",
+    "pyenv_shortcuts":      [
+                                "export PYENV_ROOT=\"/srv/pyenv\"",
+                                "export PATH=\"$PYENV_ROOT/bin:$PATH\"",
+                                "eval \"$(pyenv init -)\""
+                            ],
+    "python_versions":      [
+                                "3.5.2"
+                            ],
+    "current_python":       "3.5.2",
+    "ha_url":               "https://github.com/home-assistant/home-assistant",
+    "ha_folder_name":       "home_assistant",
+    "src_dir_name":         "src",
+    "venv_dir_name":        "ha_env",
+    "config_dir_name":      "config",
+    "config_url":           "https://github.com/fstakem/home_assistant_config",
+    "firewall_allowed":     [
+                                "ssh",
+                                "http",
+                                "https",
+                                "5123/tcp",
+                                "2812/tcp"
+                            ],
+    "service_file":         "home-assistant.service"
+}
