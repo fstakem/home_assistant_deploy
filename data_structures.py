@@ -20,3 +20,6 @@ class User(object):
 
     def __str__(self):
         return 'User<%s>' % (self.name)
+
+class DeployException(Exception):
+    pass

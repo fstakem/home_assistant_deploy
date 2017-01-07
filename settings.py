@@ -11,20 +11,19 @@ import json
 
 from data_structures import User
 
-
+# Read config json
+config = None
 config_file = 'config.json'
 with open(config_file) as config_data:    
     config = json.load(config_data)
 
-config['ha_path'] = os.path.join('/srv', config['ha_folder_name'])
-
+# Create users
 users = []
 
-for raw_user in config['users']:
+for raw_user in config['user']['accounts']:
     user = User(raw_user['name'], raw_user['type'], raw_user['ha_user'])
     users.append(user)
 
-config['users'] = users
-
+config['user']['accounts'] = users
 
 
