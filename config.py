@@ -21,9 +21,8 @@ with open(config_file) as config_data:
 users = []
 
 for raw_user in config['user']['accounts']:
-    user = User(raw_user['name'], raw_user['type'], raw_user['ha_user'])
+    user = User(raw_user['name'], raw_user['ha_user'])
     users.append(user)
 
 config['user']['accounts'] = users
-
 

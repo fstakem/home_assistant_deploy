@@ -8,11 +8,12 @@
                         "gedit",
                         "kate",
                         "tig",
-                        "htop"
+                        "htop",
+                        "tree"
                     ],
     "python_system_libs":   [
                                 "libreadline-dev",
-                                "libnursesw5-dev",
+                                "libncurses5-dev",
                                 "libssl-dev",
                                 "libgdbm-dev",
                                 "libsqlite3-dev",
@@ -25,13 +26,11 @@
                     "accounts": [
                                     {
                                         "name": "hass",
-                                        "type": "system",
                                         "ha_user": true,
                                         "smb_user": true
                                     },
                                     {
                                         "name": "fstakem",
-                                        "type": "admin",
                                         "ha_user": false,
                                         "smb_user": true
                                     }
@@ -45,10 +44,9 @@
                             ]
                 },
     "pyenv":    {
-                    "dir":              "/srv/pyenv",
                     "git_url":          "https://github.com/yyuu/pyenv",
                     "shortcuts":        [
-                                            "export PYENV_ROOT=\"/srv/pyenv\"",
+                                            "export PYENV_ROOT=\"/opt/.pyenv\"",
                                             "export PATH=\"$PYENV_ROOT/bin:$PATH\"",
                                             "eval \"$(pyenv init -)\""
                                         ],
@@ -69,7 +67,7 @@
                             "git_config_url":   "https://github.com/fstakem/home_assistant_config"
                         },
     "firewall": {
-                    "enable":   true,
+                    "enable":   false,
                     "allowed":  [
                                     "ssh",
                                     "http",
