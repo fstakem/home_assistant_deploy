@@ -67,7 +67,7 @@
                             "git_config_url":   "https://github.com/fstakem/home_assistant_config"
                         },
     "firewall": {
-                    "enable":   false,
+                    "enable":   true,
                     "allowed":  [
                                     "ssh",
                                     "http",

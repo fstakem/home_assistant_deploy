@@ -300,22 +300,27 @@ def setup_sysd(service_file):
     cmd = 'systemctl start home-assistant'
     sudo(cmd)
 
-def setup_firewall(firewall):
-    packages = ['ufw', 'GUFW']
-    install_native(packages)
+@task
+def install_firewall():
+    firewall = config['firewall']
 
-    cmd = 'ufw default deny incoming'
-    sudo(cmd)
+    if firewall['enable']:
+        switch_user(install_user, install_password)
+        packages = ['ufw', 'GUFW']
+        install_native(packages)
 
-    cmd = 'ufw default allow outgoing'
-    sudo(cmd)
-
-    for app in firewall['allowed']:
-        cmd = 'ufw allow %s' % (app)
+        cmd = 'ufw default deny incoming'
         sudo(cmd)
 
-    cmd = 'ufw enable'
-    sudo(cmd)
+        cmd = 'ufw default allow outgoing'
+        sudo(cmd)
+
+        for app in firewall['allowed']:
+            cmd = 'ufw allow %s' % (app)
+            sudo(cmd)
+
+        cmd = """echo "y" | sudo ufw enable"""
+        run(cmd)
 
 def setup_smb(user_info, smb):
     packages = ['samba', 'samba-common-bin']
@@ -352,17 +357,8 @@ def setup_monit():
 
 @task
 def test():
-    with prefix('. /home/pi/test_env/bin/activate'):
-        run('which python')
-
-    switch_user('fstakem', 'f')
-    run('pwd')
-
-    switch_user('hass', 'f')
-    run('pwd')
-
     switch_user(install_user, install_password)
-    run('pwd')
+    run("""echo "y" | sudo ufw enable""")
     
 
 
@@ -391,8 +387,7 @@ def install_all():
     install_home_assistant_deps()
     #setup_sysd(service_file)
 
-    if firewall['enable']:
-        setup_firewall(firewall)
+    install_firewall()
 
     if smb['enable']:
         setup_smb(user_info, smb)
