@@ -10,6 +10,7 @@ import os
 
 import fabric
 from fabric.api import local, env, run, task, prefix, sudo
+from fabric.operations import put
 
 from config import config
 from data_structures import DeployException
@@ -291,8 +292,12 @@ def install_home_assistant_deps():
                 cmd = 'pip install -e %s' % (src_path)
                 run(cmd)
 
-def setup_sysd(service_file):
-    fabric.api.put(service_file, '/etc/systemd/system', use_sudo=True)
+@task
+def install_service():
+    service_file = config['service_file']
+
+    switch_user(install_user, install_password)
+    put(service_file, '/etc/systemd/system/home-assistant.service', use_sudo=True)
 
     cmd = 'systemctl enable home-assistant'
     sudo(cmd)
@@ -385,8 +390,7 @@ def install_all():
     install_pyenv()
     install_home_assistant()
     install_home_assistant_deps()
-    #setup_sysd(service_file)
-
+    install_service()
     install_firewall()
 
     if smb['enable']:
@@ -395,7 +399,8 @@ def install_all():
     if monit['enable']:
         setup_monit()
 
-    #reboot()
+    # openzwave
+
     #remove_pi_user()
     
 
