@@ -57,8 +57,9 @@ def install_python_libs():
 
 @task
 def create_users():
-    users   = config['user']['accounts']
-    dirs    = user_info['dirs']
+    user_info   = config['user']
+    users       = user_info['accounts']
+    dirs        = user_info['dirs']
 
     get_passwords(users)
 
@@ -220,6 +221,7 @@ def install_home_assistant():
     root_path       = home_assistant['root_dir']
     source_dir      = home_assistant['source_dir']
     venv_dir        = home_assistant['venv_dir']
+    use_git_config  = home_assistant['use_git_config']
     config_dir      = home_assistant['config_dir']
     git_config_url  = home_assistant['git_config_url']
     ha_user         = get_ha_user(user_info)
@@ -246,7 +248,7 @@ def install_home_assistant():
     cmd = 'mkdir %s' % (config_path)
     run(cmd)
 
-    if git_config_url:
+    if use_git_config and git_config_url:
         cmd = 'git clone %s %s' % (git_config_url, config_path)
         run(cmd)
 
@@ -327,34 +329,37 @@ def install_firewall():
         cmd = """echo "y" | sudo ufw enable"""
         run(cmd)
 
-def setup_smb(user_info, smb):
-    packages = ['samba', 'samba-common-bin']
-    install_native(packages)
-    # passwords
-    # TODO
+@task
+def install_smb():
+    smb = config['smb']
 
-    cmd = 'echo >> /etc/samba/smb.conf'
-    sudo(cmd)
+    if smb['enable']:
+        switch_user(install_user, install_password)
+        packages = ['samba', 'samba-common-bin']
+        install_native(packages)
 
-    cmd = 'echo [%s] >> /etc/samba/smb.conf' % (ha_folder_name)
-    sudo(cmd)
+        cmd = 'echo "" >> /etc/samba/smb.conf'
+        sudo(cmd)
 
-    cmd = 'echo path = %s >> /etc/samba/smb.conf' % (ha_path)
-    sudo(cmd)
+        cmd = 'echo [{}] >> /etc/samba/smb.conf'.format(ha_folder_name)
+        sudo(cmd)
 
-    valid_users = [user.name for user in users]
-    user_str = ' '.join(valid_users)
-    cmd = 'echo valid users = %s >> /etc/samba/smb.conf' % (user_str)
-    sudo(cmd)
+        cmd = 'echo path = {} >> /etc/samba/smb.conf'.format(ha_path)
+        sudo(cmd)
 
-    cmd = 'echo read only = no >> /etc/samba/smb.conf'
-    sudo(cmd)
+        valid_users = [user.name for user in users]
+        user_str = ' '.join(valid_users)
+        cmd = 'echo valid users = %s >> /etc/samba/smb.conf' % (user_str)
+        sudo(cmd)
 
-    cmd = 'echo browseable = yes >> /etc/samba/smb.conf'
-    sudo(cmd)
+        cmd = 'echo read only = no >> /etc/samba/smb.conf'
+        sudo(cmd)
 
-    cmd = 'service samba restart'
-    sudo(cmd)
+        cmd = 'echo browseable = yes >> /etc/samba/smb.conf'
+        sudo(cmd)
+
+        cmd = 'service samba restart'
+        sudo(cmd)
 
 def setup_monit():
     packages = ['monit']
@@ -380,7 +385,6 @@ def install_all():
     #   6.  Change keyboard layout
     #   7.  Change wifi country
     #   8.  Setup wifi password
-    #   9.  Overclock pi
 
     create_users()
     create_all_aliases()
@@ -392,16 +396,20 @@ def install_all():
     install_home_assistant_deps()
     install_service()
     install_firewall()
+    #install_smb()
 
-    if smb['enable']:
-        setup_smb(user_info, smb)
+    # Nice to have
+    #   NFS
+    #   Monit
+    #   Openzwave
     
-    if monit['enable']:
-        setup_monit()
+@task
+def deploy_dev():
+    pass
 
-    # openzwave
-
-    #remove_pi_user()
+@task
+def deploy_prod():
+    pass
     
 
 

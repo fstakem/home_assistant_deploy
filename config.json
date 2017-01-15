@@ -64,6 +64,7 @@
                             "source_dir":       "src",
                             "venv_dir":         "ha_env",
                             "config_dir":       "config",
+                            "use_git_config":   true,
                             "git_config_url":   "https://github.com/fstakem/home_assistant_config"
                         },
     "firewall": {
