@@ -22,6 +22,31 @@
                                 "libdb-dev",
                                 "tk-dev"
                             ],
+    "openzwave":    {
+                        "system_libs":  [
+                                            "libudev-dev"
+                                        ],
+                        "python_libs":  [
+                                            "cython"
+                                        ],
+                        "git_url":  "https://github.com/OpenZWave/python-openzwave",
+                        "dir":  "openzwave"
+                    },
+    "libmicrohttpd":  {
+                            "system_libs": [
+                                                "libgcrypt20-dev",
+                                                "libgnutls28-dev",
+                                                "zzuf",
+                                                "socat"
+                                            ],
+                            "install_dir":  "libmicrohttpd",
+                            "lib":  "libmicrohttpd-0.9.19.tar.gz",
+                            "ftp_site": "ftp://ftp.gnu.org/gnu/libmicrohttpd/"
+                        },
+    "openzwave_ctrl":  {
+                            "dir":  "libmicrohttpd",
+                            "micro_httpd_lib":  "libmicrohttpd-0.9.19.tar.gz"
+                        },
     "user":     {
                     "accounts": [
                                     {

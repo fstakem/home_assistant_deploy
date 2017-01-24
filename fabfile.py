@@ -112,10 +112,10 @@ def create_user_alias(user):
     cmd = """echo '# Aliases >> {}""".format(bashrc)
     run(cmd)
 
-    cmd = """echo 'alias ll=ls -l' >> {}""".format(bashrc)
+    cmd = """echo "alias ll='ls -l'" >> {}""".format(bashrc)
     run(cmd)
 
-    cmd = """echo 'alias la=ls -la' >> {}""".format(bashrc)
+    cmd = """echo "alias la='ls -la'" >> {}""".format(bashrc)
     run(cmd)
 
 @task
@@ -361,9 +361,120 @@ def install_smb():
         cmd = 'service samba restart'
         sudo(cmd)
 
-def setup_monit():
+@task
+def install_monit():
     packages = ['monit']
     install_native(packages)
+
+@task
+def install_nfs():
+    pass
+
+@task
+def install_openzwave():
+    user_info               = config['user']
+    openzwave               = config['openzwave']
+    openzwave_system_libs   = openzwave['system_libs']
+    openzwave_python_libs   = openzwave['python_libs']
+    openzwave_git_url       = openzwave['git_url']
+    openzwave_dir           = openzwave['dir']
+    home_assistant          = config['home_assistant']
+    venv_dir                = home_assistant['venv_dir']
+    root_path               = home_assistant['root_dir']
+    ha_user                 = get_ha_user(user_info)
+    ha_path                 = os.path.join('/srv', root_path)
+    home_path               = get_user_home_dir(ha_user.name)
+    pyenv_path              = os.path.join(home_path, '.pyenv')
+
+    switch_user(install_user, install_password)
+    install_native(openzwave_system_libs)
+
+    openzwave_path = os.path.join('/srv', openzwave_dir)
+    cmd = 'mkdir {}'.format(openzwave_path)
+    sudo(cmd)
+
+    cmd = 'chown -R {}:{} {}'.format(ha_user.name, ha_user.name, openzwave_path)
+    sudo(cmd)
+
+    switch_user(ha_user.name, ha_user.password)
+
+    cmd1 = 'PYENV_ROOT="{}"'.format(pyenv_path)
+    cmd2 = 'PATH="$PYENV_ROOT/bin:$PATH"'
+    cmd3 = 'eval "$(pyenv init -)"'
+    cmd_str = '{}; {}; {}'.format(cmd1, cmd2, cmd3)
+
+    with prefix(cmd_str):
+        cmd = 'cd {}'.format(ha_path)
+
+        with prefix(cmd):
+            cmd = 'virtualenv %s' % (venv_dir)
+            run(cmd)
+
+            venv_path = os.path.join(ha_path, venv_dir)
+            venv_activate = os.path.join(venv_path, 'bin', 'activate')
+            cmd = '. {}'.format(venv_activate)
+
+            with prefix(cmd):
+                cmd = 'pip install {}'.format(openzwave_python_libs)
+
+            cmd = 'cd {}'.format(openzwave_path)
+
+            with prefix(cmd_str):
+                cmd = 'git clone {}'.format(openzwave_git_url)
+
+                with cd("python-openzwave"):
+                    cmd = 'git checkout --track origin/python3'
+                    run(cmd)
+
+                    cmd = 'make build'
+                    run(cmd)
+
+                    cmd = 'make install'
+                    run(cmd)
+
+@task
+def install_micro_httpd():
+    user_info               = config['user']
+    home_assistant          = config['home_assistant']
+    root_path               = home_assistant['root_dir']
+    admin_user              = get_admin_user(user_info)
+    libmicrohttpd           = config['libmicrohttpd']
+    install_dir             = libmicrohttpd['install_dir']
+    lib                     = libmicrohttpd['lib']
+    ftp_site                = libmicrohttpd['ftp_site']
+    system_libs             = libmicrohttpd['system_libs']
+
+    switch_user(install_user, install_password)
+    install_native(system_libs)
+    
+    install_path = os.path.join('/opt', install_dir)
+    cmd = 'mkdir {}'.format(install_path)
+    sudo(cmd)
+
+    cmd = 'chown -R {}:{} {}'.format(admin_user.name, admin_user.name, install_path)
+    sudo(cmd)
+
+    switch_user(ha_user.name, ha_user.password)
+
+    with cd(install_path):
+        ftp_path = os.path.join(ftp_site, lib)
+        cmd = 'wget {}'.format(ftp_path)
+        run(cmd)
+
+        cmd = 'tar zxvf {}'.format(lib)
+        run(cmd)
+
+        lib_dir = '.'.join(lib.split('.')[:-2])
+
+        with cd(lib_dir):
+            run('./configure')
+            run('make')
+            sudo('make install')
+
+@task
+def install_openzwave_ctrl():
+    pass
+    
 
 @task
 def test():
@@ -397,12 +508,13 @@ def install_all():
     install_service()
     install_firewall()
     #install_smb()
+    #install_monit()
+    #install_nfs()
+    install_openzwave()
+    install_micro_httpd()
+    #install_openzwave_ctrl()
+    #install_mqtt()
 
-    # Nice to have
-    #   NFS
-    #   Monit
-    #   Openzwave
-    
 @task
 def deploy_dev():
     pass
@@ -410,6 +522,13 @@ def deploy_dev():
 @task
 def deploy_prod():
     pass
+
+
+# Testing OPENZWAVE-CTRL
+# 1. Install sys libs libmicrohttpd
+# 2. Install libmicrohttpd
+# 3. Install sys libs openzwave-ctrl
+# 4. Install openzwave-ctrl
     
 
 
