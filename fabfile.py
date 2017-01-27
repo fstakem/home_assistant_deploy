@@ -9,7 +9,7 @@
 import os
 
 import fabric
-from fabric.api import local, env, run, task, prefix, sudo
+from fabric.api import local, env, run, task, prefix, sudo, cd
 from fabric.operations import put
 
 from config import config
@@ -60,8 +60,6 @@ def create_users():
     user_info   = config['user']
     users       = user_info['accounts']
     dirs        = user_info['dirs']
-
-    get_passwords(users)
 
     for user in users:
         switch_user(install_user, install_password)
@@ -330,45 +328,9 @@ def install_firewall():
         run(cmd)
 
 @task
-def install_smb():
-    smb = config['smb']
-
-    if smb['enable']:
-        switch_user(install_user, install_password)
-        packages = ['samba', 'samba-common-bin']
-        install_native(packages)
-
-        cmd = 'echo "" >> /etc/samba/smb.conf'
-        sudo(cmd)
-
-        cmd = 'echo [{}] >> /etc/samba/smb.conf'.format(ha_folder_name)
-        sudo(cmd)
-
-        cmd = 'echo path = {} >> /etc/samba/smb.conf'.format(ha_path)
-        sudo(cmd)
-
-        valid_users = [user.name for user in users]
-        user_str = ' '.join(valid_users)
-        cmd = 'echo valid users = %s >> /etc/samba/smb.conf' % (user_str)
-        sudo(cmd)
-
-        cmd = 'echo read only = no >> /etc/samba/smb.conf'
-        sudo(cmd)
-
-        cmd = 'echo browseable = yes >> /etc/samba/smb.conf'
-        sudo(cmd)
-
-        cmd = 'service samba restart'
-        sudo(cmd)
-
-@task
 def install_monit():
     packages = ['monit']
     install_native(packages)
-
-@task
-def install_nfs():
-    pass
 
 @task
 def install_openzwave():
@@ -446,7 +408,7 @@ def install_micro_httpd():
 
     switch_user(install_user, install_password)
     install_native(system_libs)
-    
+
     install_path = os.path.join('/opt', install_dir)
     cmd = 'mkdir {}'.format(install_path)
     sudo(cmd)
@@ -454,7 +416,7 @@ def install_micro_httpd():
     cmd = 'chown -R {}:{} {}'.format(admin_user.name, admin_user.name, install_path)
     sudo(cmd)
 
-    switch_user(ha_user.name, ha_user.password)
+    switch_user(admin_user.name, admin_user.password)
 
     with cd(install_path):
         ftp_path = os.path.join(ftp_site, lib)
@@ -473,13 +435,81 @@ def install_micro_httpd():
 
 @task
 def install_openzwave_ctrl():
-    pass
+    user_info               = config['user']
+    ha_user                 = get_ha_user(user_info)
+    ha_path                 = os.path.join('/srv', root_path)
+    openzwave_ctrl          = config['openzwave_ctrl']
+    install_dir             = openzwave_ctrl['install_dir']
+    git_url                 = openzwave_ctrl['git_url']
+
+    # TODO
+
+    switch_user(install_user, install_password)
     
+    install_path = os.path.join('/srv', install_dir)
+    cmd = 'mkdir {}'.format(install_path)
+    sudo(cmd)
+
+    cmd = 'chown -R {}:{} {}'.format(ha_user.name, ha_user.name, install_path)
+    sudo(cmd)
+
+    switch_user(ha_user.name, ha_user.password)
+
+    with cd(install_path):
+        cmd = 'git clone {}'.format(git_url)
+        run(cmd)
+
+        with cd('open-zwave-control-panel'):
+            put('./files/openzwave_ctrl_makefile', 'Makefile')
+            run("make")
+
+@task
+def install_mqtt():
+    user_info               = config['user']
+    admin_user              = get_admin_user(user_info)
+    mos_srv_user            = get_mosquitto_user(user_info)
+    mqtt                    = config['mqtt']
+    app_dir                 = mqtt['dir']
+    system_libs             = mqtt['system_libs']
+    users                   = mqtt['users']
+
+    switch_user(admin_user.name, admin_user.password)
+
+    app_path = os.path.join('/opt', app_dir)
+    cmd = 'mkdir {}'.format(app_path)
+    sudo(cmd)
+
+    with cd(app_path):
+        run("wget http://repo.mosquitto.org/debian/mosquitto-repo.gpg.key")
+        sudo("apt-key add mosquitto-repo.gpg.key")
+
+        with cd("/etc/apt/sources.list.d/"):
+            sudo("wget http://repo.mosquitto.org/debian/mosquitto-jessie.list")
+            install_native(system_libs)
+
+            with cd("/etc/mosquitto"):
+                put("./files/mosquitto.conf", "mosquitto.conf", use_sudo=True)
+                sudo('chown root:root mosquitto.conf')
+                sudo("touch pwfile")
+
+                cmd = 'chown {}:{} pwfile'.format(mos_srv_user.name, mos_srv_user.name)
+                sudo(cmd)
+                sudo("chmod 0600 pwfile")
+
+                switch_user(mos_srv_user.name, mos_srv_user.password)
+
+                for user in users:
+                    cmd = 'sudo mosquitto_passwd -b pwfile {} {}'.format(user.name, user.password)
+                    sudo(cmd)
+
+    cmd = 'chown -R {}:{} {}'.format(mos_srv_user.name, mos_srv_user.name, app_path)
+    sudo(cmd)
 
 @task
 def test():
     switch_user(install_user, install_password)
-    run("""echo "y" | sudo ufw enable""")
+    with cd("/etc/mosquitto"):
+        put("./files/mosquitto.conf", "test.conf", use_sudo=True)
     
 
 
@@ -507,13 +537,11 @@ def install_all():
     install_home_assistant_deps()
     install_service()
     install_firewall()
-    #install_smb()
     #install_monit()
-    #install_nfs()
     install_openzwave()
     install_micro_httpd()
     #install_openzwave_ctrl()
-    #install_mqtt()
+    install_mqtt()
 
 @task
 def deploy_dev():

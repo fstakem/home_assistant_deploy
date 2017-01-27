@@ -44,20 +44,38 @@
                             "ftp_site": "ftp://ftp.gnu.org/gnu/libmicrohttpd/"
                         },
     "openzwave_ctrl":  {
-                            "dir":  "libmicrohttpd",
-                            "micro_httpd_lib":  "libmicrohttpd-0.9.19.tar.gz"
+                            "install_dir":  "openzwave_ctrl",
+                            "git_url":  "https://github.com/OpenZWave/open-zwave-control-panel"
                         },
+    "mqtt": {
+                "dir": "mosquitto",
+                "system_libs": [
+                                    "mosquitto",
+                                    "mosquitto-clients"
+                                ],
+                "users": [
+                            "mqtt_home"
+                        ]
+            },
     "user":     {
                     "accounts": [
                                     {
                                         "name": "hass",
                                         "ha_user": true,
+                                        "admin_user": false,
                                         "smb_user": true
                                     },
                                     {
                                         "name": "fstakem",
                                         "ha_user": false,
+                                        "admin_user": true,
                                         "smb_user": true
+                                    },
+                                    {
+                                        "name": "mosquitto",
+                                        "ha_user": false,
+                                        "admin_user": false,
+                                        "smb_user": false
                                     }
                                 ],
                     "dirs": [
@@ -100,7 +118,8 @@
                                     "https",
                                     "5123/tcp",
                                     "2812/tcp",
-                                    "8123/tcp"
+                                    "8123/tcp", 
+                                    "1883/tcp"
                                 ]
                 },
     "smb":  {

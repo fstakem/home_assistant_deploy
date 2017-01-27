@@ -63,6 +63,12 @@ def get_ha_user(user_info):
 
 def get_admin_user(user_info):
     users = user_info['accounts']
-    admin_user = [u for u in users if u.home_assistant_user == False][0]
+    admin_user = [u for u in users if u.admin_user == True][0]
 
     return admin_user
+
+def get_mosquitto_user(user_info):
+    users = user_info['accounts']
+    mosquitto_user = [u for u in users if u.name == 'mosquitto'][0]
+
+    return mosquitto_user

@@ -21,8 +21,21 @@ with open(config_file) as config_data:
 users = []
 
 for raw_user in config['user']['accounts']:
-    user = User(raw_user['name'], raw_user['ha_user'])
+    user = User(raw_user['name'], raw_user['ha_user'], raw_user['admin_user'])
     users.append(user)
+
+get_passwords(users)
 
 config['user']['accounts'] = users
 
+
+# Create mosquitto users
+users = []
+
+for raw_user in config['mqtt']['users']:
+    user = MosquittoUser(raw_user['name'])
+    users.append(user)
+
+get_passwords(users)
+
+config['mqtt']['users'] = users
