@@ -10,6 +10,8 @@ import os
 import json
 
 from data_structures import User
+from data_structures import MosquittoUser
+from helper import get_passwords
 
 # Read config json
 config = None
@@ -32,8 +34,8 @@ config['user']['accounts'] = users
 # Create mosquitto users
 users = []
 
-for raw_user in config['mqtt']['users']:
-    user = MosquittoUser(raw_user['name'])
+for raw_name in config['mqtt']['users']:
+    user = MosquittoUser(raw_name)
     users.append(user)
 
 get_passwords(users)

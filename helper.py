@@ -17,7 +17,7 @@ def install_native(packages):
     cmd = 'apt-get update'
     sudo(cmd)
 
-    cmd = 'apt-get -qy install %s' % ' '.join(packages)
+    cmd = 'apt-get -qy --allow-unauthenticated install %s' % ' '.join(packages)
     sudo(cmd)
 
 def get_passwd(username):
@@ -30,6 +30,9 @@ def get_passwd(username):
             return first_pw
 
     raise ValueError
+
+def get_passwd(username):
+	return 'f'
 
 def get_user_home_dir(username):
     path = None

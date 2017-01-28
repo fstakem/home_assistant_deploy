@@ -16,9 +16,9 @@ from config import config
 from data_structures import DeployException
 from data_structures import User
 from helper import install_native
-from helper import get_passwd
 from helper import get_user_home_dir
-from helper import get_passwords
+from helper import get_mosquitto_user
+
 from helper import switch_user
 from helper import get_ha_user
 from helper import get_admin_user
@@ -37,6 +37,7 @@ install_password = 'raspberry'
 env.hosts = [config['system']['hostname']]
 env.shell = "/bin/sh -c"
 env.warn_only = True
+env.use_ssh_config = False
 
 switch_user(install_user, install_password)
 
@@ -94,8 +95,6 @@ def create_user_dirs(user, user_dirs):
 def create_all_aliases():
     users       = config['user']['accounts']
 
-    get_passwords(users)
-
     for user in users:
         switch_user(user.name, user.password)
         create_user_alias(user)
@@ -145,10 +144,9 @@ def install_pyenv():
     git_url         = pyenv['git_url']
     git_update_url  = pyenv['update_git_url']
     
-    pi_user = User(install_user, False)
+    pi_user = User(install_user, False, True)
     pi_user.password = install_password
     users.append(pi_user)
-    get_passwords(users)
 
     for user in users:
         switch_user(user.name, user.password)
@@ -326,11 +324,6 @@ def install_firewall():
 
         cmd = """echo "y" | sudo ufw enable"""
         run(cmd)
-
-@task
-def install_monit():
-    packages = ['monit']
-    install_native(packages)
 
 @task
 def install_openzwave():
@@ -537,7 +530,6 @@ def install_all():
     install_home_assistant_deps()
     install_service()
     install_firewall()
-    #install_monit()
     install_openzwave()
     install_micro_httpd()
     #install_openzwave_ctrl()
