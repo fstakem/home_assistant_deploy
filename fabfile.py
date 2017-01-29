@@ -23,6 +23,25 @@ from helper import switch_user
 from helper import get_ha_user
 from helper import get_admin_user
 
+from   fabric.api import output
+
+FAB_SHOW_RUNNING  = True   # Show the command that fabric runs
+FAB_SHOW_STDOUT   = True  # Show the stdout of the command run
+FAB_SHOW_STDERR   = True  # Show the stderr of the command run
+FAB_SHOW_DEBUG    = True   # Increase logging detail for messages
+FAB_SHOW_USER     = True
+FAB_SHOW_STATUS   = False  # Prevent fabric from using print in some situations (at least in disconnect_all)
+FAB_SHOW_WARNINGS = False  # Avoid fabric from showing messages about failed commands
+
+output['running']  = FAB_SHOW_RUNNING
+output['stdout']   = FAB_SHOW_STDOUT
+output['stderr']   = FAB_SHOW_STDERR
+output['debug']    = FAB_SHOW_DEBUG
+output['user']     = FAB_SHOW_USER
+output['status']   = FAB_SHOW_STATUS
+output['warnings'] = FAB_SHOW_WARNINGS
+
+
 
 # Globals
 # --------------------------------------------------------------------------
@@ -155,7 +174,7 @@ def install_pyenv():
         pyenv_path  = os.path.join(home_path, '.pyenv')
         update_path = os.path.join(pyenv_path, 'plugins', 'pyenv-update')
 
-        cmd = 'mkdir %s' % (pyenv_path)
+        cmd = 'mkdir -p %s' % (pyenv_path)
         run(cmd)
 
         cmd = 'git clone %s %s' % (git_url, pyenv_path)
@@ -225,7 +244,7 @@ def install_home_assistant():
     switch_user(install_user, install_password)
 
     ha_path = os.path.join('/srv', root_path)
-    cmd = 'mkdir %s' % (ha_path)
+    cmd = 'mkdir -p %s' % (ha_path)
     sudo(cmd)
 
     cmd = 'chown -R {}:{} {}'.format(ha_user.name, ha_user.name, ha_path)
@@ -234,14 +253,14 @@ def install_home_assistant():
     switch_user(ha_user.name, ha_user.password)
 
     src_path = os.path.join(ha_path, source_dir)
-    cmd = 'mkdir %s' % (src_path)
+    cmd = 'mkdir -p %s' % (src_path)
     run(cmd)
 
     cmd = 'git clone %s %s' % (git_src_url, src_path)
     run(cmd)
 
     config_path = os.path.join(ha_path, config_dir)
-    cmd = 'mkdir %s' % (config_path)
+    cmd = 'mkdir -p %s' % (config_path)
     run(cmd)
 
     if use_git_config and git_config_url:
@@ -345,12 +364,13 @@ def install_openzwave():
     install_native(openzwave_system_libs)
 
     openzwave_path = os.path.join('/srv', openzwave_dir)
-    cmd = 'mkdir {}'.format(openzwave_path)
+    cmd = 'mkdir -p {}'.format(openzwave_path)
     sudo(cmd)
 
     cmd = 'chown -R {}:{} {}'.format(ha_user.name, ha_user.name, openzwave_path)
     sudo(cmd)
 
+    sudo('service home-assistant stop')
     switch_user(ha_user.name, ha_user.password)
 
     cmd1 = 'PYENV_ROOT="{}"'.format(pyenv_path)
@@ -360,32 +380,36 @@ def install_openzwave():
 
     with prefix(cmd_str):
         cmd = 'cd {}'.format(ha_path)
+        run(cmd)
+
+        venv_path = os.path.join(ha_path, venv_dir)
+        venv_activate = os.path.join(venv_path, 'bin', 'activate')
+        cmd = '. {}'.format(venv_activate)
 
         with prefix(cmd):
-            cmd = 'virtualenv %s' % (venv_dir)
+            libs = ' '.join(openzwave_python_libs)
+            cmd = 'pip install {}'.format(libs)
+            run(cmd)
+            py_openzwave_path = os.path.join(openzwave_path, 'python_openzwave')
+
+            cmd = 'rm -rf {}'.format(py_openzwave_path)
             run(cmd)
 
-            venv_path = os.path.join(ha_path, venv_dir)
-            venv_activate = os.path.join(venv_path, 'bin', 'activate')
-            cmd = '. {}'.format(venv_activate)
+            cmd = 'git clone {} {}'.format(openzwave_git_url, py_openzwave_path)
+            run(cmd)
 
-            with prefix(cmd):
-                cmd = 'pip install {}'.format(openzwave_python_libs)
+            with cd(py_openzwave_path):
+                cmd = 'git checkout --track origin/python3'
+                run(cmd)
 
-            cmd = 'cd {}'.format(openzwave_path)
+                cmd = 'make build'
+                run(cmd)
 
-            with prefix(cmd_str):
-                cmd = 'git clone {}'.format(openzwave_git_url)
+                cmd = 'make install'
+                run(cmd)
 
-                with cd("python-openzwave"):
-                    cmd = 'git checkout --track origin/python3'
-                    run(cmd)
-
-                    cmd = 'make build'
-                    run(cmd)
-
-                    cmd = 'make install'
-                    run(cmd)
+    switch_user(install_user, install_password)
+    sudo('service home-assistant start')
 
 @task
 def install_micro_httpd():
@@ -403,7 +427,7 @@ def install_micro_httpd():
     install_native(system_libs)
 
     install_path = os.path.join('/opt', install_dir)
-    cmd = 'mkdir {}'.format(install_path)
+    cmd = 'mkdir -p {}'.format(install_path)
     sudo(cmd)
 
     cmd = 'chown -R {}:{} {}'.format(admin_user.name, admin_user.name, install_path)
@@ -440,7 +464,7 @@ def install_openzwave_ctrl():
     switch_user(install_user, install_password)
     
     install_path = os.path.join('/srv', install_dir)
-    cmd = 'mkdir {}'.format(install_path)
+    cmd = 'mkdir -p {}'.format(install_path)
     sudo(cmd)
 
     cmd = 'chown -R {}:{} {}'.format(ha_user.name, ha_user.name, install_path)
@@ -469,7 +493,7 @@ def install_mqtt():
     switch_user(admin_user.name, admin_user.password)
 
     app_path = os.path.join('/opt', app_dir)
-    cmd = 'mkdir {}'.format(app_path)
+    cmd = 'mkdir -p {}'.format(app_path)
     sudo(cmd)
 
     with cd(app_path):
@@ -501,8 +525,18 @@ def install_mqtt():
 @task
 def test():
     switch_user(install_user, install_password)
-    with cd("/etc/mosquitto"):
-        put("./files/mosquitto.conf", "test.conf", use_sudo=True)
+    cmd = 'ps -ef | grep python'
+    result = run(cmd)
+
+    lines = result.split('\n')
+
+    print(len(lines))
+    print(lines[0].split()[1])
+    print(lines[0].split())
+    print(lines[1].split())
+
+    if len(lines) > 2:
+        print(lines[2].split())
     
 
 
