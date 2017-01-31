@@ -456,29 +456,28 @@ def install_openzwave_ctrl():
     ha_user                 = get_ha_user(user_info)
     ha_path                 = os.path.join('/srv', root_path)
     openzwave_ctrl          = config['openzwave_ctrl']
+    openzwave_dir           = openzwave_ctrl['dir']
     install_dir             = openzwave_ctrl['install_dir']
     git_url                 = openzwave_ctrl['git_url']
 
-    # TODO
-
     switch_user(install_user, install_password)
-    
-    install_path = os.path.join('/srv', install_dir)
-    cmd = 'mkdir -p {}'.format(install_path)
+
+    openzwave_path = os.path.join('/srv', openzwave_dir)
+    cmd = 'mkdir -p {}'.format(openzwave_path)
     sudo(cmd)
 
-    cmd = 'chown -R {}:{} {}'.format(ha_user.name, ha_user.name, install_path)
+    cmd = 'chown -R {}:{} {}'.format(ha_user.name, ha_user.name, openzwave_path)
     sudo(cmd)
 
     switch_user(ha_user.name, ha_user.password)
 
-    with cd(install_path):
-        cmd = 'git clone {}'.format(git_url)
-        run(cmd)
+    install_path = os.path.join(openzwave_path, install_dir)
+    cmd = 'git clone {} {}'.format(git_url, install_path)
+    run(cmd)
 
-        with cd('open-zwave-control-panel'):
-            put('./files/openzwave_ctrl_makefile', 'Makefile')
-            run("make")
+    with cd(install_path):
+        put('./files/openzwave_ctrl_makefile', 'Makefile')
+        run("make")
 
 @task
 def install_mqtt():
@@ -565,7 +564,7 @@ def install_all():
     install_service()
     install_firewall()
     install_openzwave()
-    install_micro_httpd()
+    #install_micro_httpd()
     #install_openzwave_ctrl()
     install_mqtt()
 

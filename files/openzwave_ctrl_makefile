@@ -21,7 +21,7 @@ DEBUG_LDFLAGS	:= -g
 CFLAGS	:= -c $(DEBUG_CFLAGS)
 LDFLAGS	:= $(DEBUG_LDFLAGS)
 
-OPENZWAVE := /srv/homeassistant/src/python-openzwave/openzwave
+OPENZWAVE := /srv/openzwave/python_openzwave/openzwave
 LIBMICROHTTPD := /usr/local/lib/libmicrohttpd.a
 
 INCLUDES := -I $(OPENZWAVE)/cpp/src -I $(OPENZWAVE)/cpp/src/command_classes/ \
