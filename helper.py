@@ -31,9 +31,6 @@ def get_passwd(username):
 
     raise ValueError
 
-def get_passwd(username):
-	return 'f'
-
 def get_user_home_dir(username):
     path = None
 

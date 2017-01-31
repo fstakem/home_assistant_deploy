@@ -564,8 +564,8 @@ def install_all():
     install_service()
     install_firewall()
     install_openzwave()
-    #install_micro_httpd()
-    #install_openzwave_ctrl()
+    install_micro_httpd()
+    install_openzwave_ctrl()
     install_mqtt()
 
 @task
