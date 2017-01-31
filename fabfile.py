@@ -466,9 +466,6 @@ def install_openzwave_ctrl():
     cmd = 'mkdir -p {}'.format(openzwave_path)
     sudo(cmd)
 
-    cmd = 'chown -R {}:{} {}'.format(ha_user.name, ha_user.name, openzwave_path)
-    sudo(cmd)
-
     switch_user(ha_user.name, ha_user.password)
 
     install_path = os.path.join(openzwave_path, install_dir)
@@ -478,6 +475,9 @@ def install_openzwave_ctrl():
     with cd(install_path):
         put('./files/openzwave_ctrl_makefile', 'Makefile')
         run("make")
+
+        switch_user(install_user, install_password)
+        sudo("ln -sd /srv/home_assistant/ha_env/lib/python3.6/site-packages/libopenzwave-0.3.1-py3.6-linux-armv7l.egg/config")
 
 @task
 def install_mqtt():

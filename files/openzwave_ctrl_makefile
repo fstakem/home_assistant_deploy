@@ -30,7 +30,7 @@ INCLUDES := -I $(OPENZWAVE)/cpp/src -I $(OPENZWAVE)/cpp/src/command_classes/ \
 	-I /srv/homeassistant/src/libmicrohttpd/src/include
 
 # Remove comment below for gnutls support
-GNUTLS := -lgnutls
+GNUTLS := -lgnutls -lgcrypt
 
 # for Linux uncomment out next three lines
 LIBZWAVE := $(OPENZWAVE)/libopenzwave.a
