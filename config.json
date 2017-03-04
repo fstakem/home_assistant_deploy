@@ -22,7 +22,10 @@
                                 "libdb-dev",
                                 "tk-dev",
                                 "libxml2-dev",
-                                "libxslt1-dev"
+                                "libxslt1-dev",
+                                "libjpeg9-dev",
+                                "liblcms2-dev",
+                                "libwebp-dev"
                             ],
     "openzwave":    {
                         "system_libs":  [
