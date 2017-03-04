@@ -20,7 +20,9 @@
                                 "libbz2-dev",
                                 "liblzma-dev",
                                 "libdb-dev",
-                                "tk-dev"
+                                "tk-dev",
+                                "libxml2-dev",
+                                "libxslt1-dev"
                             ],
     "openzwave":    {
                         "system_libs":  [
