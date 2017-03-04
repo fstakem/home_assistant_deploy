@@ -25,7 +25,8 @@
                                 "libxslt1-dev",
                                 "libjpeg9-dev",
                                 "liblcms2-dev",
-                                "libwebp-dev"
+                                "libwebp-dev",
+                                "libffi-dev"
                             ],
     "openzwave":    {
                         "system_libs":  [
