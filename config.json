@@ -9,7 +9,8 @@
                         "kate",
                         "tig",
                         "htop",
-                        "tree"
+                        "tree",
+                        "nmap"
                     ],
     "python_system_libs":   [
                                 "libreadline-dev",
